@@ -23,11 +23,11 @@ class RestaurantListCreateView(APIView):
 
         if tract_id is None:
             geo_la = CensusTracts.objects.get(geoid= '06037').geometry
-            queryset = queryset.filter(location__within= geo_la)
+            queryset = queryset.filter(location__intersects= geo_la)
 
         if tract_id is not None:
             tract_geometry = CensusTracts.objects.get(geoid = tract_id).geometry
-            queryset = queryset.filter(location__within = tract_geometry)
+            queryset = queryset.filter(location__intersects = tract_geometry)
 
         if limit is not None:
             queryset = queryset[:int(limit)]
@@ -69,7 +69,7 @@ class CensusTractDensityListCreateView(APIView):
     def get_queryset(self):
 
         geo_la = CensusTracts.objects.get(geoid= '06037').geometry
-        county_filter = CensusTracts.objects.filter(geometry__within=geo_la)
+        county_filter = CensusTracts.objects.filter(geometry__intersects=geo_la)
         county_tracts = county_filter.values_list('geoid', flat=True)
 
         county_numind = NumericalIndicators.objects.filter(tract_id__in=county_tracts)
@@ -143,17 +143,17 @@ class MenusList(generics.ListCreateAPIView):
 
         if geoid is None:
             geo_la = CensusTracts.objects.get(geoid= '06037').geometry
-            facilities = Facilities.objects.filter(location__within= geo_la).values_list('restaurant', flat=True)
+            facilities = Facilities.objects.filter(location__intersects= geo_la).values_list('restaurant', flat=True)
             queryset = queryset.filter(establishment_id__in=facilities)
 
         if geoid is not None:
             tract_geometry = CensusTracts.objects.get(geoid = geoid).geometry
-            facilities = Facilities.objects.filter(location__within = tract_geometry).values_list('restaurant_id', flat=True).distinct()
+            facilities = Facilities.objects.filter(location__intersects = tract_geometry).values_list('restaurant_id', flat=True).distinct()
             queryset = queryset.filter(establishment_id__in=facilities)
         
         if distribution is not None:
             geo_la = CensusTracts.objects.get(geoid= '06037').geometry
-            facilities = Facilities.objects.filter(location__within= geo_la).values_list('restaurant', flat=True)
+            facilities = Facilities.objects.filter(location__intersects= geo_la).values_list('restaurant', flat=True)
             queryset = Restaurants.objects.filter(establishment_id__in=facilities)
             
             min_rrr = queryset.aggregate(Min('rrr_min'))
@@ -206,7 +206,7 @@ class NumericalIndicatorsPlotList(generics.ListCreateAPIView):
         queryset = NumericalIndicators.objects.select_related()
 
         geo_la = CensusTracts.objects.get(geoid= '06037').geometry
-        county_filter = CensusTracts.objects.filter(geometry__within=geo_la)
+        county_filter = CensusTracts.objects.filter(geometry__intersects=geo_la)
         county_tracts = county_filter.values_list('geoid', flat=True)
 
         queryset = queryset.filter(tract_id__in=county_tracts)
@@ -254,7 +254,7 @@ class CategoricalIndicatorsPlotList(generics.ListCreateAPIView):
         queryset = CategoricalIndicators.objects.select_related()
 
         geo_la = CensusTracts.objects.get(geoid= '06037').geometry
-        county_filter = CensusTracts.objects.filter(geometry__within=geo_la)
+        county_filter = CensusTracts.objects.filter(geometry__intersects=geo_la)
         county_tracts = county_filter.values_list('geoid', flat=True)
 
         queryset = queryset.filter(tract_id__in=county_tracts)
